@@ -4,18 +4,21 @@ require 'pry'
 module Rack
   module Handler
     class Liter
+      DEFAULT_OPTIONS = {
+        Host: '0.0.0.0',
+        Port: 8080,
+      }
+
       def self.run(app, options)
-        new.run_server(app, options)
+        options = DEFAULT_OPTIONS.merge(options)
+        new.run(app, options)
       end
 
-      def run_server(app, options)
-        server = TCPServer.new('0.0.0.0', 8080)
-        while true
-          conn = server.accept
-
+      def run(app, options)
+        Socket.tcp_server_loop(options[:Host], options[:Port]) do |sock, addr|
           buf = ""
           while true
-            buf << conn.sysread(4096)
+            buf << sock.sysread(4096)
             break if buf[-4,4] == "\r\n\r\n"
           end
 
@@ -26,8 +29,8 @@ module Rack
             'SCRIPT_NAME'       => '',
             'PATH_INFO'         => req[1],
             'QUERY_STRING'      => req[1].split('?').last,
-            'SERVER_NAME'       => '0.0.0.0',
-            'SERVER_PORT'       => '8080',
+            'SERVER_NAME'       => options[:Host],
+            'SERVER_PORT'       => options[:Port],
 
             'rack.version'      => [1, 3],
             'rack.url_scheme'   => 'http',
@@ -48,11 +51,11 @@ module Rack
             res_header << "#{k}: #{v}\r\n"
           end
           res_header << "Connection: close\r\n\r\n"
-          conn.write(res_header)
+          sock.write(res_header)
           body.each do |chunk|
-            conn.write(chunk)
+            sock.write(chunk)
           end
-          conn.close
+          sock.close
         end
       end
     end
