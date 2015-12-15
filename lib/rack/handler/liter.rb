@@ -23,12 +23,15 @@ module Rack
           end
 
           reqs = buf.split("\r\n")
+
           req = reqs.shift.split
+          path_info, query_string = req[1].split('?')
+
           env = {
             'REQUEST_METHOD'    => req[0],
             'SCRIPT_NAME'       => '',
-            'PATH_INFO'         => req[1],
-            'QUERY_STRING'      => req[1].split('?').last,
+            'PATH_INFO'         => path_info,
+            'QUERY_STRING'      => query_string || "",
             'SERVER_NAME'       => options[:Host],
             'SERVER_PORT'       => options[:Port],
 
