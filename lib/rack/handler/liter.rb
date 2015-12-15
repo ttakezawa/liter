@@ -14,12 +14,10 @@ module Rack
           conn = server.accept
 
           buf = ""
-          # while true
-          #   buf << conn.sysread(4096)
-          #   binding.pry
-          #   break if buf[-4,4] == "\r\n\r\n"
-          # end
-          buf = "GET / HTTP/1.1\r\nHost: 127.0.0.1:8080\r\nUser-Agent: curl/7.43.0\r\nAccept: */*\r\n\r\n"
+          while true
+            buf << conn.sysread(4096)
+            break if buf[-4,4] == "\r\n\r\n"
+          end
 
           reqs = buf.split("\r\n")
           req = reqs.shift.split
