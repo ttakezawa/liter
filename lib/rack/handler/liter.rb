@@ -34,6 +34,7 @@ module Rack
             'QUERY_STRING'      => query_string || "",
             'SERVER_NAME'       => options[:Host],
             'SERVER_PORT'       => options[:Port],
+            'REMOTE_ADDR'       => addr.ip_address,
 
             'rack.version'      => [1, 3],
             'rack.url_scheme'   => 'http',
