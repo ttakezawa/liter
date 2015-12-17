@@ -15,10 +15,10 @@ module Rack
       end
 
       def run(app, options)
-        Socket.tcp_server_loop(options[:Host], options[:Port]) do |sock, addr|
-          buf = ""
+        Socket.tcp_server_loop(options[:Host], options[:Port]) do |socket, addr|
+          buf = ''
           while true
-            buf << sock.sysread(4096)
+            buf << socket.sysread(4096)
             break if buf[-4,4] == "\r\n\r\n"
           end
 
@@ -31,7 +31,7 @@ module Rack
             'REQUEST_METHOD'    => req[0],
             'SCRIPT_NAME'       => '',
             'PATH_INFO'         => path_info,
-            'QUERY_STRING'      => query_string || "",
+            'QUERY_STRING'      => query_string || '',
             'SERVER_NAME'       => options[:Host],
             'SERVER_PORT'       => options[:Port],
             'REMOTE_ADDR'       => addr.ip_address,
@@ -45,8 +45,8 @@ module Rack
             'rack.run_once'     => false,
           }
           reqs.each do |header|
-            header = header.split(": ")
-            env["HTTP_" + header[0].upcase.tr('-', '_')] = header[1];
+            header = header.split(': ')
+            env['HTTP_' + header[0].upcase.tr('-', '_')] = header[1];
           end
           status, headers, body = app.call(env)
           res_header = "HTTP/1.0 #{status} #{Rack::Utils::HTTP_STATUS_CODES[status.to_i]}\r\n"
@@ -54,11 +54,11 @@ module Rack
             res_header << "#{k}: #{v}\r\n"
           end
           res_header << "Connection: close\r\n\r\n"
-          sock.write(res_header)
-          body.each do |chunk|
-            sock.write(chunk)
-          end
-          sock.close
+          socket.write(res_header)
+          body.each {|s| socket.write(s)}
+          body.close if body.respond_to? :close
+
+          socket.close
         end
       end
     end
