@@ -48,8 +48,7 @@ module Rack
             env["HTTP_" + header[0].upcase.tr('-', '_')] = header[1];
           end
           status, headers, body = app.call(env)
-          res_header = "HTTP/1.0 #{status}"
-          res_header << "#{Rack::Utils::HTTP_STATUS_CODES[status.to_i]}\r\n"
+          res_header = "HTTP/1.0 #{status} #{Rack::Utils::HTTP_STATUS_CODES[status.to_i]}\r\n"
           headers.each do |k, v|
             res_header << "#{k}: #{v}\r\n"
           end
