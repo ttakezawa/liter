@@ -18,6 +18,7 @@ module Rack
       end
 
       def self.serve(app, options)
+        Signal.trap(:PIPE, "IGNORE")
         Socket.tcp_server_loop(options[:Host], options[:Port]) do |socket, addr|
           verb, uri, http_version = socket.gets("\r\n").split(' ')
           path_info, query_string = uri.split('?')
