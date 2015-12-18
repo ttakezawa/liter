@@ -1,5 +1,4 @@
 require 'socket'
-require 'pry'
 
 module Rack
   module Handler
@@ -8,6 +7,11 @@ module Rack
         Host: '0.0.0.0',
         Port: 8080,
       }
+      SPECIAL_HEADERS = {
+        'CONTENT_TYPE'   => true,
+        'CONTENT_LENGTH' => true
+      }
+      NULL_IO = StringIO.new('').set_encoding('BINARY')
 
       def self.run(app, options)
         options = DEFAULT_OPTIONS.merge(options)
@@ -29,16 +33,27 @@ module Rack
             'REMOTE_ADDR'       => addr.ip_address,
             'rack.version'      => [1, 3],
             'rack.url_scheme'   => 'http',
-            'rack.input'        => StringIO.new('').set_encoding('BINARY'),
+            'rack.input'        => NULL_IO,
             'rack.errors'       => STDERR,
             'rack.multithread'  => false,
             'rack.multiprocess' => false,
             'rack.run_once'     => false,
           }
 
-          while (header = socket.gets).start_with?("\r\n")
-            k, v = header.split(': ')
-            env["HTTP_#{k.upcase.tr('-', '_')}"] = v
+          socket.each_line do |header|
+            break if header == "\r\n"
+            key, value = header.split(': ')
+            key.upcase!
+            key.tr!('-', '_')
+            unless SPECIAL_HEADERS.include?(key)
+              key.insert(0, 'HTTP_')
+            end
+            value.chomp!("\r\n")
+            env[key] = value
+          end
+
+          if (content_length = env['CONTENT_LENGTH'].to_i) > 0
+            env['rack.input'] = StringIO.new(socket.read(content_length))
           end
 
           status, headers, body = app.call(env)
