@@ -5,7 +5,7 @@ module Rack
     class Liter
       DEFAULT_OPTIONS = {
         Host: '0.0.0.0',
-        Port: 8080,
+        Port: 8080
       }
       SPECIAL_HEADERS = {
         'CONTENT_TYPE'   => true,
@@ -14,13 +14,12 @@ module Rack
       NULL_IO = StringIO.new('').set_encoding('BINARY')
 
       def self.run(app, options)
-        options = DEFAULT_OPTIONS.merge(options)
-        new.run(app, options)
+        serve(app, DEFAULT_OPTIONS.merge(options))
       end
 
-      def run(app, options)
+      def self.serve(app, options)
         Socket.tcp_server_loop(options[:Host], options[:Port]) do |socket, addr|
-          verb, uri, http_version = socket.gets.split(' ')
+          verb, uri, http_version = socket.gets("\r\n").split(' ')
           path_info, query_string = uri.split('?')
 
           env = {
@@ -34,13 +33,13 @@ module Rack
             'rack.version'      => [1, 3],
             'rack.url_scheme'   => 'http',
             'rack.input'        => NULL_IO,
-            'rack.errors'       => STDERR,
+            'rack.errors'       => $stderr,
             'rack.multithread'  => false,
             'rack.multiprocess' => false,
-            'rack.run_once'     => false,
+            'rack.run_once'     => false
           }
 
-          socket.each_line do |header|
+          socket.each_line("\r\n") do |header|
             break if header == "\r\n"
             key, value = header.split(': ')
             key.upcase!
