@@ -23,9 +23,11 @@ module Rack
         Signal.trap(:PIPE, 'IGNORE')
         Socket.tcp_server_loop(options[:Host], options[:Port]) do |socket, addr|
           begin
+            # Parse Request-Line
             verb, uri, http_version = socket.readline("\r\n").split(' ')
             path_info, query_string = uri.split('?')
 
+            # Initialize Rack environment
             env = {
               'REQUEST_METHOD'    => verb,
               'SCRIPT_NAME'       => '',
@@ -44,6 +46,7 @@ module Rack
               'rack.run_once'     => false
             }
 
+            # Parse request headers and set to the environment
             socket.each_line("\r\n") do |header|
               break if header == "\r\n"
               key, value = header.split(': ')
@@ -57,18 +60,22 @@ module Rack
             end
 
             if (content_length = env['CONTENT_LENGTH'].to_i) > 0
+              # Read the request body
               env['rack.input'] = StringIO.new(socket.sysread(content_length))
             end
 
+            # Run a Rack app
             status, headers, body = app.call(env)
 
-            res_header = "HTTP/1.0 #{status} #{Rack::Utils::HTTP_STATUS_CODES[status.to_i]}\r\n"
+            # Create response headers
+            response_header = "HTTP/1.0 #{status} #{Rack::Utils::HTTP_STATUS_CODES[status.to_i]}\r\n"
             headers.each do |k, v|
-              res_header << "#{k}: #{v}\r\n"
+              response_header << "#{k}: #{v}\r\n"
             end
-            res_header << "Connection: close\r\n\r\n"
+            response_header << "Connection: close\r\n\r\n"
 
-            socket.syswrite(res_header)
+            # Send a response
+            socket.syswrite(response_header)
             body.each {|s| socket.syswrite(s)}
 
           rescue EOFError, Errno::EPIPE
