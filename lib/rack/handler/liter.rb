@@ -36,7 +36,7 @@ module Rack
               'SERVER_NAME'       => options[:Host],
               'SERVER_PORT'       => options[:Port],
               'REMOTE_ADDR'       => addr.ip_address,
-              'SERVER_PROTOCOL'   => 'HTTP/1.0',
+              'HTTP_VERSION'      => 'HTTP/1.0',
               'rack.version'      => [1, 3],
               'rack.url_scheme'   => 'http',
               'rack.input'        => NULL_IO,
