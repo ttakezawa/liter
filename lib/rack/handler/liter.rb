@@ -1,4 +1,6 @@
 require 'socket'
+require 'stringio'
+require 'rack/utils'
 
 module Rack
   module Handler
