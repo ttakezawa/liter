@@ -21,10 +21,7 @@ module Rack
         Signal.trap(:PIPE, 'IGNORE')
         Socket.tcp_server_loop(options[:Host], options[:Port]) do |socket, addr|
           begin
-            request_line = socket.gets("\r\n")
-            next unless request_line
-
-            verb, uri, http_version = request_line.split(' ')
+            verb, uri, http_version = socket.readline("\r\n").split(' ')
             path_info, query_string = uri.split('?')
 
             env = {
@@ -57,7 +54,7 @@ module Rack
             end
 
             if (content_length = env['CONTENT_LENGTH'].to_i) > 0
-              env['rack.input'] = StringIO.new(socket.read(content_length))
+              env['rack.input'] = StringIO.new(socket.sysread(content_length))
             end
 
             status, headers, body = app.call(env)
@@ -71,6 +68,8 @@ module Rack
             socket.syswrite(res_header)
             body.each {|s| socket.syswrite(s)}
 
+          rescue EOFError, Errno::EPIPE
+            # The client closed the connection and we have nothing to do.
           ensure
             body.close if body.respond_to? :close
             socket.close
