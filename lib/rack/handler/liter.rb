@@ -61,7 +61,7 @@ module Rack
 
             if (content_length = env['CONTENT_LENGTH'].to_i) > 0
               # Read the request body
-              env['rack.input'] = StringIO.new(socket.sysread(content_length))
+              env['rack.input'] = StringIO.new(socket.read(content_length))
             end
 
             # Run a Rack app
