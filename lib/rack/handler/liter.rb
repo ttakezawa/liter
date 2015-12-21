@@ -29,14 +29,16 @@ module Rack
 
             # Initialize Rack environment
             env = {
-              'REQUEST_METHOD'    => verb,
-              'SCRIPT_NAME'       => '',
-              'PATH_INFO'         => path_info,
-              'QUERY_STRING'      => query_string || '',
+              'HTTP_VERSION'      => 'HTTP/1.0',
               'SERVER_NAME'       => options[:Host],
               'SERVER_PORT'       => options[:Port],
               'REMOTE_ADDR'       => addr.ip_address,
-              'HTTP_VERSION'      => 'HTTP/1.0',
+              'SCRIPT_NAME'       => '',
+              'REQUEST_METHOD'    => verb,
+              'SERVER_PROTOCOL'   => http_version,
+              'REQUEST_URI'       => uri,
+              'PATH_INFO'         => path_info,
+              'QUERY_STRING'      => query_string || '',
               'rack.version'      => [1, 3],
               'rack.url_scheme'   => 'http',
               'rack.input'        => NULL_IO,
